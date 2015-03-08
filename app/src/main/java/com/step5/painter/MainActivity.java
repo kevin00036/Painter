@@ -63,7 +63,7 @@ class myView extends View
         Random rnd = new Random();
         int r = rnd.nextInt(300);
         Paint paint = new Paint();
-        paint.setColor(Color.parseColor("#CD5C5C"));
+        paint.setColor(Color.parseColor("#5DCC5C"));
         canvas.drawCircle(x, y, r, paint);
 
     }
