@@ -2,15 +2,14 @@ package com.step5.painter;
 
 import android.app.Activity;
 import android.content.Context;
-import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.os.Bundle;
+import android.util.AttributeSet;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.LinearLayout;
 
 import java.util.Random;
 
@@ -20,8 +19,8 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        //setContentView(R.layout.activity_main);
-        setContentView(new myView(this));
+        setContentView(R.layout.activity_main);
+        //setContentView(new myView(this));
     }
 
 
@@ -54,6 +53,17 @@ class myView extends View
     {
         super(context);
     }
+
+    public myView(Context context, AttributeSet attrs)
+    {
+        super(context, attrs);
+    }
+
+    public myView(Context context, AttributeSet attrs, int defStyle)
+    {
+        super(context, attrs, defStyle);
+    }
+
 
     @Override
     protected void onDraw(Canvas canvas)
