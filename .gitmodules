@@ -1,0 +1,3 @@
+[submodule "HoloColorPicker"]
+	path = HoloColorPicker
+	url = https://github.com/LarsWerkman/HoloColorPicker.git

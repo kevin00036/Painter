@@ -7,22 +7,68 @@
     >
 
 
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Old Button"
-        android:id="@+id/basic"
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
         android:layout_alignParentTop="true"
-        android:layout_alignParentStart="true"
-        android:onClick="buttonClicked" />
+        android:layout_alignParentStart="true">
 
-    <com.step5.painter.myView
-        android:layout_width="207dp"
-        android:layout_height="209dp"
-        android:id="@+id/canvasView"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentEnd="true"
-        android:layout_alignTop="@+id/basic"
-        android:layout_toEndOf="@+id/basic"
-        android:focusableInTouchMode="true" />
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="81dp"
+            android:layout_height="fill_parent"
+            android:id="@+id/linearLayout"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentStart="true">
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Old"
+                android:id="@+id/testButton"
+                android:onClick="buttonClicked"
+                android:layout_alignParentTop="true" />
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="&lt;="
+                android:id="@+id/undoButton"
+                android:onClick="undoClicked" />
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Pencil"
+                android:id="@+id/pencilButton"
+                android:onClick="selectPencil" />
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Line"
+                android:id="@+id/lineButton"
+                android:onClick="selectLine" />
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Color"
+                android:id="@+id/colorButton"
+                android:onClick="selectColor" />
+
+        </LinearLayout>
+
+        <com.step5.painter.myView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/canvasView"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentEnd="true"
+            android:layout_toEndOf="@+id/linearLayout"
+            android:focusableInTouchMode="true"
+            android:layout_alignTop="@+id/linearLayout" />
+    </LinearLayout>
+
 </RelativeLayout>
