@@ -1,7 +1,11 @@
 package com.step5.painter;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.app.DialogFragment;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -19,6 +23,7 @@ import android.view.View;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Random;
+
 
 
 public class MainActivity extends Activity {
@@ -77,7 +82,8 @@ public class MainActivity extends Activity {
     }
     public void selectColor(View view)
     {
-
+        AlphaDialogFragment apd = new AlphaDialogFragment();
+        apd.show(getFragmentManager(), "Alpha");
     }
 }
 
@@ -97,6 +103,8 @@ class myView extends View
     int Height;
     boolean resized = false;
     int mode = MODE_PENCIL;
+
+    int currentColor = Color.BLACK;
 
     float lastX, lastY;
     Path pencilPath;
@@ -173,6 +181,11 @@ class myView extends View
         mode = m;
     }
 
+    public void setColor(int color)
+    {
+        currentColor = color;
+    }
+
     void clearCanvas(Canvas cv)
     {
         cv.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
@@ -207,7 +220,8 @@ class myView extends View
         int act = event.getAction();
 
         Paint paint = new Paint();
-        paint.setColor(Color.parseColor("#CD5C5C"));
+        //paint.setColor(Color.parseColor("#CD5C5C"));
+        paint.setColor(currentColor);
         paint.setStrokeWidth(10);
         paint.setStrokeCap(Paint.Cap.ROUND);
         paint.setStrokeJoin(Paint.Join.ROUND);
@@ -225,11 +239,13 @@ class myView extends View
                 float mx = (x + lastX) / 2;
                 float my = (y + lastY) / 2;
                 pencilPath.quadTo(lastX, lastY, mx, my);
+                clearCanvas(currentCanvas);
                 currentCanvas.drawPath(pencilPath, paint);
             }
             else if(act == MotionEvent.ACTION_UP)
             {
                 pencilPath.lineTo(x+0.1f, y+0.1f);
+                clearCanvas(currentCanvas);
                 currentCanvas.drawPath(pencilPath, paint);
                 pencilPath = null;
                 deBuffer();
@@ -264,3 +280,4 @@ class myView extends View
     }
 
 }
+
