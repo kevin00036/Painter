@@ -49,6 +49,11 @@ public class AlphaDialogFragment extends DialogFragment {
         picker.addSVBar(svBar);
         picker.addOpacityBar(opacityBar);
 
+        MainActivity act = (MainActivity)getActivity();
+        picker.setOldCenterColor(act.mv.currentColor);
+        picker.setColor(act.mv.currentColor);
+        picker.setNewCenterColor(act.mv.currentColor);
+
         return alertDialog;
     }
 }
