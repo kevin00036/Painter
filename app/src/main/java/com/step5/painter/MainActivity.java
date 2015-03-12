@@ -1,7 +1,6 @@
 package com.step5.painter;
 
 import android.app.Activity;
-import android.content.ContentValues;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -9,8 +8,6 @@ import android.graphics.Color;
 import android.graphics.DashPathEffect;
 import android.graphics.Paint;
 import android.graphics.Path;
-import android.graphics.PathDashPathEffect;
-import android.graphics.PathEffect;
 import android.graphics.Point;
 import android.graphics.PorterDuff;
 import android.os.Bundle;
@@ -43,7 +40,6 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
         mv = (myView) findViewById(R.id.canvasView);
         apd = new BetaDialogFragment();
-        //setContentView(new myView(this));
     }
 
 
@@ -146,6 +142,7 @@ class myView extends View
 
     Bitmap currentBitmap;
     Bitmap bufferBitmap;
+    Bitmap clipBitmap;
     Deque<Bitmap> undoQueue;
 
     Canvas currentCanvas;
@@ -158,7 +155,8 @@ class myView extends View
     int currentColor = Color.BLACK;
 
     float lastX, lastY;
-    float selectSX, selectSY, selectTX, selectTY;
+    int selectSX, selectSY, selectTX, selectTY;
+    int origSX, origSY, origW, origH;
     Path pencilPath;
 
 
@@ -212,11 +210,15 @@ class myView extends View
         Canvas cv = new Canvas(currentBitmap);
         cv.drawBitmap(bufferBitmap, 0, 0, null);
         clearCanvas(currentCanvas);
+        Log.d("Debug", "deBuffer !!!");
     }
 
     public void undo()
     {
         if(undoQueue.isEmpty()) return;
+
+        setMode(mode);
+
         Canvas cv = new Canvas(currentBitmap);
         clearCanvas(cv);
         cv.drawBitmap(undoQueue.getFirst(), 0, 0, null);
@@ -226,6 +228,9 @@ class myView extends View
 
     public void setMode(int m)
     {
+        if(mode == MODE_SELECT)
+            selectEndMove();
+
         clearCanvas(currentCanvas);
         mode = m;
         invalidate();
@@ -239,6 +244,27 @@ class myView extends View
     void clearCanvas(Canvas cv)
     {
         cv.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
+    }
+
+    void selectEndMove()
+    {
+        if(!select_selected) return;
+        select_selected = false;
+        if(selectSX == origSX && selectSY == origSY)
+        {
+            clearCanvas(currentCanvas);
+            return;
+        }
+
+        Paint paintW = new Paint();
+        paintW.setStyle(Paint.Style.FILL);
+        paintW.setColor(Color.WHITE);
+
+        clearCanvas(currentCanvas);
+        currentCanvas.drawRect(origSX, origSY, origSX + origW, origSY + origH, paintW);
+        currentCanvas.drawBitmap(clipBitmap, selectSX, selectSY, null);
+
+        deBuffer();
     }
 
     public void saveBitmap()
@@ -390,6 +416,10 @@ class myView extends View
         }
         else if(mode == MODE_SELECT)
         {
+            Paint paintW = new Paint();
+            paintW.setStyle(Paint.Style.FILL);
+            paintW.setColor(Color.WHITE);
+
             Paint paint2 = new Paint();
             paint2.setStrokeWidth(3);
             paint2.setStyle(Paint.Style.STROKE);
@@ -397,19 +427,20 @@ class myView extends View
 
             if(select_selected && act == MotionEvent.ACTION_DOWN)
             {
-                if(selectSX - x > SELECT_TOL || x - selectTX > SELECT_TOL ||
-                   selectSY - y > SELECT_TOL || y - selectTY > SELECT_TOL)
-                    select_selected = false;
+                if(selectSX - x > SELECT_TOL || x - selectSX - origW > SELECT_TOL ||
+                   selectSY - y > SELECT_TOL || y - selectSY - origH > SELECT_TOL) {
+                    selectEndMove();
+                }
             }
 
             if(!select_selected)
             {
                 if (act == MotionEvent.ACTION_DOWN) {
-                    selectSX = selectTX = x;
-                    selectSY = selectTY = y;
+                    selectSX = selectTX = (int)x;
+                    selectSY = selectTY = (int)y;
                 } else if (act == MotionEvent.ACTION_MOVE) {
-                    selectTX = x;
-                    selectTY = y;
+                    selectTX = (int)x;
+                    selectTY = (int)y;
                     clearCanvas(currentCanvas);
                     paint2.setColor(Color.BLACK);
                     paint2.setPathEffect(new DashPathEffect(itvl, 0.0f));
@@ -421,32 +452,57 @@ class myView extends View
                             selectSX, selectSY, selectTX, selectTY, paint2);
                 } else if (act == MotionEvent.ACTION_UP) {
                     if(selectSX > selectTX) {
-                        float tmp = selectSX;
+                        int tmp = selectSX;
                         selectSX = selectTX;
                         selectTX = tmp;
                     }
                     if(selectSY > selectTY) {
-                        float tmp = selectSY;
+                        int tmp = selectSY;
                         selectSY = selectTY;
                         selectTY = tmp;
                     }
-                    select_selected = true;
+
+                    if(selectSX < selectTX && selectSY < selectTY) {
+                        select_selected = true;
+                        origSX = selectSX;
+                        origSY = selectSY;
+                        origW = selectTX - selectSX;
+                        origH = selectTY - selectSY;
+                        clipBitmap = Bitmap.createBitmap(currentBitmap, origSX, origSY, origW, origH);
+                    }
                 }
             }
             else
             {
                 if (act == MotionEvent.ACTION_DOWN) {
-                    selectSX = selectTX = x;
-                    selectSY = selectTY = y;
+                    lastX = x;
+                    lastY = y;
                 } else if (act == MotionEvent.ACTION_MOVE) {
+                    float xdiff = x - lastX;
+                    float ydiff = y - lastY;
+                    int paintX = selectSX + (int)xdiff;
+                    int paintY = selectSY + (int)ydiff;
+
                     clearCanvas(currentCanvas);
-                    currentCanvas.drawRect(lastX, lastY, x, y, paint);
+                    currentCanvas.drawRect(origSX, origSY, origSX + origW, origSY + origH, paintW);
+                    currentCanvas.drawBitmap(clipBitmap, paintX, paintY, null);
+
+                    paint2.setColor(Color.BLACK);
+                    paint2.setPathEffect(new DashPathEffect(itvl, 0.0f));
+                    currentCanvas.drawRect(paintX, paintY, paintX + origW, paintY + origH, paint2);
+                    paint2.setColor(Color.WHITE);
+                    paint2.setPathEffect(new DashPathEffect(itvl, 10.0f));
+                    currentCanvas.drawRect(paintX, paintY, paintX + origW, paintY + origH, paint2);
                 } else if (act == MotionEvent.ACTION_UP) {
+                    float xdiff = x - lastX;
+                    float ydiff = y - lastY;
+                    selectSX += (int)xdiff;
+                    selectSY += (int)ydiff;
                 }
             }
         }
 
-        Log.d("Debug", event.toString());
+        //Log.d("Debug", event.toString());
 
         invalidate();
 
