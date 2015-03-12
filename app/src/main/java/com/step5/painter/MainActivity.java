@@ -6,8 +6,11 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.DashPathEffect;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.PathDashPathEffect;
+import android.graphics.PathEffect;
 import android.graphics.Point;
 import android.graphics.PorterDuff;
 import android.os.Bundle;
@@ -139,6 +142,8 @@ class myView extends View
 
     final int MAX_UNDO = 10;
 
+    final float SELECT_TOL = 50.0f;
+
     Bitmap currentBitmap;
     Bitmap bufferBitmap;
     Deque<Bitmap> undoQueue;
@@ -153,6 +158,7 @@ class myView extends View
     int currentColor = Color.BLACK;
 
     float lastX, lastY;
+    float selectSX, selectSY, selectTX, selectTY;
     Path pencilPath;
 
 
@@ -163,10 +169,6 @@ class myView extends View
         Width = 1000;
         Height = 700;
         undoQueue = new ArrayDeque<>();
-        //Width = getLayoutParams().width;
-        //currentBitmap = Bitmap.createBitmap(Width, Height, Bitmap.Config.ARGB_8888);
-        //bufferBitmap = Bitmap.createBitmap(Width, Height, Bitmap.Config.ARGB_8888);
-        //currentCanvas = new Canvas(currentBitmap);
     }
 
     public myView(Context context)
@@ -224,7 +226,9 @@ class myView extends View
 
     public void setMode(int m)
     {
+        clearCanvas(currentCanvas);
         mode = m;
+        invalidate();
     }
 
     public void setColor(int color)
@@ -281,7 +285,6 @@ class myView extends View
         int act = event.getAction();
 
         Paint paint = new Paint();
-        //paint.setColor(Color.parseColor("#CD5C5C"));
         paint.setColor(currentColor);
         paint.setStrokeWidth(10);
         paint.setStrokeCap(Paint.Cap.ROUND);
@@ -376,32 +379,6 @@ class myView extends View
 
                 currentCanvas.drawBitmap(currentBitmap, 0, 0, null);
                 floodFill_array(bufferBitmap, new Point(cx, cy), origColor, currentColor);
-
-                /*
-                Queue<Point> queue = new ArrayDeque<>();
-                queue.add(new Point(cx, cy));
-
-                int dx[] = { 1,-1, 0, 0};
-                int dy[] = { 0, 0, 1,-1};
-
-                while(!queue.isEmpty())
-                {
-                    Point p = queue.element();
-                    queue.remove();
-                    if(bufferBitmap.getPixel(p.x, p.y) != 0)
-                        continue;
-
-                    bufferBitmap.setPixel(p.x, p.y, currentColor);
-                    //Log.d("Debug", "Set Pixel " + p.x + "," + p.y + " " + currentColor);
-
-                    for(int i=0; i<4; i++)
-                    {
-                        int nx = p.x + dx[i], ny = p.y + dy[i];
-                        if(currentBitmap.getPixel(nx, ny) == origColor)
-                            queue.add(new Point(nx, ny));
-                    }
-                }
-                */
             }
             else if(act == MotionEvent.ACTION_MOVE)
             {
@@ -413,19 +390,59 @@ class myView extends View
         }
         else if(mode == MODE_SELECT)
         {
-            if(act == MotionEvent.ACTION_DOWN)
+            Paint paint2 = new Paint();
+            paint2.setStrokeWidth(3);
+            paint2.setStyle(Paint.Style.STROKE);
+            float itvl[] = {10.0f, 10.0f};
+
+            if(select_selected && act == MotionEvent.ACTION_DOWN)
             {
-                lastX = x;
-                lastY = y;
+                if(selectSX - x > SELECT_TOL || x - selectTX > SELECT_TOL ||
+                   selectSY - y > SELECT_TOL || y - selectTY > SELECT_TOL)
+                    select_selected = false;
             }
-            else if(act == MotionEvent.ACTION_MOVE)
+
+            if(!select_selected)
             {
-                clearCanvas(currentCanvas);
-                currentCanvas.drawOval(lastX, lastY, x, y, paint);
+                if (act == MotionEvent.ACTION_DOWN) {
+                    selectSX = selectTX = x;
+                    selectSY = selectTY = y;
+                } else if (act == MotionEvent.ACTION_MOVE) {
+                    selectTX = x;
+                    selectTY = y;
+                    clearCanvas(currentCanvas);
+                    paint2.setColor(Color.BLACK);
+                    paint2.setPathEffect(new DashPathEffect(itvl, 0.0f));
+                    currentCanvas.drawRect(
+                            selectSX, selectSY, selectTX, selectTY, paint2);
+                    paint2.setColor(Color.WHITE);
+                    paint2.setPathEffect(new DashPathEffect(itvl, 10.0f));
+                    currentCanvas.drawRect(
+                            selectSX, selectSY, selectTX, selectTY, paint2);
+                } else if (act == MotionEvent.ACTION_UP) {
+                    if(selectSX > selectTX) {
+                        float tmp = selectSX;
+                        selectSX = selectTX;
+                        selectTX = tmp;
+                    }
+                    if(selectSY > selectTY) {
+                        float tmp = selectSY;
+                        selectSY = selectTY;
+                        selectTY = tmp;
+                    }
+                    select_selected = true;
+                }
             }
-            else if(act == MotionEvent.ACTION_UP)
+            else
             {
-                deBuffer();
+                if (act == MotionEvent.ACTION_DOWN) {
+                    selectSX = selectTX = x;
+                    selectSY = selectTY = y;
+                } else if (act == MotionEvent.ACTION_MOVE) {
+                    clearCanvas(currentCanvas);
+                    currentCanvas.drawRect(lastX, lastY, x, y, paint);
+                } else if (act == MotionEvent.ACTION_UP) {
+                }
             }
         }
 
@@ -487,6 +504,5 @@ class myView extends View
 
         bmp.setPixels(arrPixels, 0, width, 0, 0, width, height);
     }
-
 }
 
