@@ -114,6 +114,13 @@ public class MainActivity extends Activity {
         bpd.show(getFragmentManager(), "Alpha");
     }
 
+    public void selectSelect(View view)
+    {
+        apd.dismiss();
+        mv.setMode(mv.MODE_SELECT);
+        mv.select_selected = false;
+    }
+
     public void clickSave(View view)
     {
         mv.saveBitmap();
@@ -128,6 +135,7 @@ class myView extends View
     final int MODE_CIRCLE = 3;
 
     final int MODE_FILL = 10;
+    final int MODE_SELECT = 11;
 
     final int MAX_UNDO = 10;
 
@@ -140,6 +148,7 @@ class myView extends View
     int Height;
     boolean resized = false;
     int mode = MODE_PENCIL;
+    boolean select_selected;
 
     int currentColor = Color.BLACK;
 
@@ -396,6 +405,23 @@ class myView extends View
             }
             else if(act == MotionEvent.ACTION_MOVE)
             {
+            }
+            else if(act == MotionEvent.ACTION_UP)
+            {
+                deBuffer();
+            }
+        }
+        else if(mode == MODE_SELECT)
+        {
+            if(act == MotionEvent.ACTION_DOWN)
+            {
+                lastX = x;
+                lastY = y;
+            }
+            else if(act == MotionEvent.ACTION_MOVE)
+            {
+                clearCanvas(currentCanvas);
+                currentCanvas.drawOval(lastX, lastY, x, y, paint);
             }
             else if(act == MotionEvent.ACTION_UP)
             {
