@@ -1,3 +1,6 @@
 [submodule "HoloColorPicker"]
 	path = HoloColorPicker
 	url = https://github.com/LarsWerkman/HoloColorPicker.git
+[submodule "threekkapps_library"]
+	path = threekkapps_library
+	url = https://github.com/mar3kk/threekkapps_library.git
