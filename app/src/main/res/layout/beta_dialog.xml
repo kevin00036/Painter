@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center_vertical"
+    android:weightSum="1">
+
+
+    <GridLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center_vertical">
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Pencil"
+            android:id="@+id/buttonPencil"
+            android:layout_row="0"
+            android:layout_column="0"
+            android:onClick="selectPencil" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Line"
+            android:id="@+id/buttonLine"
+            android:layout_row="0"
+            android:layout_column="1"
+            android:onClick="selectLine" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Rect"
+            android:id="@+id/buttonRectangle"
+            android:layout_row="0"
+            android:layout_column="2"
+            android:onClick="selectRectangle" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Circle"
+            android:id="@+id/buttonCIrcle"
+            android:layout_row="0"
+            android:layout_column="3"
+            android:onClick="selectCircle" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Fill"
+            android:id="@+id/buttonFill"
+            android:layout_row="1"
+            android:layout_column="0"
+            android:onClick="selectFill" />
+    </GridLayout>
+</LinearLayout>

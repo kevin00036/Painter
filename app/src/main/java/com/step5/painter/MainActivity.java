@@ -11,6 +11,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
+import android.graphics.Point;
 import android.graphics.PorterDuff;
 import android.os.Bundle;
 import android.util.AttributeSet;
@@ -22,13 +23,16 @@ import android.view.View;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.Queue;
 import java.util.Random;
-
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 
 
 public class MainActivity extends Activity {
 
     myView mv;
+    BetaDialogFragment apd;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,6 +40,7 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         mv = (myView) findViewById(R.id.canvasView);
+        apd = new BetaDialogFragment();
         //setContentView(new myView(this));
     }
 
@@ -72,25 +77,53 @@ public class MainActivity extends Activity {
         mv.undo();
     }
 
+    public void selectTools(View view)
+    {
+        apd.show(getFragmentManager(), "Beta");
+    }
+
     public void selectPencil(View view)
     {
+        apd.dismiss();
         mv.setMode(mv.MODE_PENCIL);
     }
     public void selectLine(View view)
     {
+        apd.dismiss();
         mv.setMode(mv.MODE_LINE);
     }
+    public void selectRectangle(View view)
+    {
+        apd.dismiss();
+        mv.setMode(mv.MODE_RECTANGLE);
+    }
+    public void selectCircle(View view)
+    {
+        apd.dismiss();
+        mv.setMode(mv.MODE_CIRCLE);
+    }
+
+    public void selectFill(View view)
+    {
+        apd.dismiss();
+        mv.setMode(mv.MODE_FILL);
+    }
+
     public void selectColor(View view)
     {
-        AlphaDialogFragment apd = new AlphaDialogFragment();
-        apd.show(getFragmentManager(), "Alpha");
+        AlphaDialogFragment bpd = new AlphaDialogFragment();
+        bpd.show(getFragmentManager(), "Alpha");
     }
 }
 
 class myView extends View
 {
-    final int MODE_PENCIL = 1;
-    final int MODE_LINE = 2;
+    final int MODE_PENCIL = 0;
+    final int MODE_LINE = 1;
+    final int MODE_RECTANGLE = 2;
+    final int MODE_CIRCLE = 3;
+
+    final int MODE_FILL = 10;
 
     final int MAX_UNDO = 10;
 
@@ -199,6 +232,8 @@ class myView extends View
             currentBitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
             bufferBitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
             currentCanvas = new Canvas(bufferBitmap);
+            Canvas cv = new Canvas(currentBitmap);
+            cv.drawColor(Color.WHITE);
             resized = true;
         }
     }
@@ -265,6 +300,80 @@ class myView extends View
             {
                 clearCanvas(currentCanvas);
                 currentCanvas.drawLine(lastX, lastY, x, y, paint);
+            }
+            else if(act == MotionEvent.ACTION_UP)
+            {
+                deBuffer();
+            }
+        }
+        else if(mode == MODE_RECTANGLE)
+        {
+            if(act == MotionEvent.ACTION_DOWN)
+            {
+                lastX = x;
+                lastY = y;
+            }
+            else if(act == MotionEvent.ACTION_MOVE)
+            {
+                clearCanvas(currentCanvas);
+                currentCanvas.drawRect(lastX, lastY, x, y, paint);
+            }
+            else if(act == MotionEvent.ACTION_UP)
+            {
+                deBuffer();
+            }
+        }
+        else if(mode == MODE_CIRCLE)
+        {
+            if(act == MotionEvent.ACTION_DOWN)
+            {
+                lastX = x;
+                lastY = y;
+            }
+            else if(act == MotionEvent.ACTION_MOVE)
+            {
+                clearCanvas(currentCanvas);
+                currentCanvas.drawOval(lastX, lastY, x, y, paint);
+            }
+            else if(act == MotionEvent.ACTION_UP)
+            {
+                deBuffer();
+            }
+        }
+        else if(mode == MODE_FILL)
+        {
+            if(act == MotionEvent.ACTION_DOWN)
+            {
+                clearCanvas(currentCanvas);
+                int cx = (int)x, cy = (int)y;
+                int origColor = currentBitmap.getPixel(cx, cy);
+
+                Queue<Point> queue = new ArrayDeque<>();
+                queue.add(new Point(cx, cy));
+
+                int dx[] = { 1,-1, 0, 0};
+                int dy[] = { 0, 0, 1,-1};
+
+                while(!queue.isEmpty())
+                {
+                    Point p = queue.element();
+                    queue.remove();
+                    if(bufferBitmap.getPixel(p.x, p.y) != 0)
+                        continue;
+
+                    bufferBitmap.setPixel(p.x, p.y, currentColor);
+                    //Log.d("Debug", "Set Pixel " + p.x + "," + p.y + " " + currentColor);
+
+                    for(int i=0; i<4; i++)
+                    {
+                        int nx = p.x + dx[i], ny = p.y + dy[i];
+                        if(currentBitmap.getPixel(nx, ny) == origColor)
+                            queue.add(new Point(nx, ny));
+                    }
+                }
+            }
+            else if(act == MotionEvent.ACTION_MOVE)
+            {
             }
             else if(act == MotionEvent.ACTION_UP)
             {

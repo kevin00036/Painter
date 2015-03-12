@@ -40,16 +40,9 @@
             <Button
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Pencil"
+                android:text="Tools"
                 android:id="@+id/pencilButton"
-                android:onClick="selectPencil" />
-
-            <Button
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Line"
-                android:id="@+id/lineButton"
-                android:onClick="selectLine" />
+                android:onClick="selectTools" />
 
             <Button
                 android:layout_width="wrap_content"
