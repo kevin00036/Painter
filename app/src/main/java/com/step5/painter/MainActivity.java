@@ -1,11 +1,8 @@
 package com.step5.painter;
 
 import android.app.Activity;
-import android.app.AlertDialog;
-import android.app.Dialog;
-import android.app.DialogFragment;
+import android.content.ContentValues;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -14,20 +11,22 @@ import android.graphics.Path;
 import android.graphics.Point;
 import android.graphics.PorterDuff;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Toast;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayDeque;
+import java.util.Date;
 import java.util.Deque;
+import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Random;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-
 
 public class MainActivity extends Activity {
 
@@ -113,6 +112,11 @@ public class MainActivity extends Activity {
     {
         AlphaDialogFragment bpd = new AlphaDialogFragment();
         bpd.show(getFragmentManager(), "Alpha");
+    }
+
+    public void clickSave(View view)
+    {
+        mv.saveBitmap();
     }
 }
 
@@ -222,6 +226,19 @@ class myView extends View
     void clearCanvas(Canvas cv)
     {
         cv.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR);
+    }
+
+    public void saveBitmap()
+    {
+        Date date = new Date(System.currentTimeMillis());
+        SimpleDateFormat sdf = new SimpleDateFormat ("yyyyMMddHHmmss");
+        String filename = "Image_" + sdf.format(date) + ".png";
+
+        MediaStore.Images.Media.insertImage(getContext().getContentResolver(),
+                currentBitmap, filename, "Step5 Painter");
+
+        Toast toast = Toast.makeText(getContext(), "Image saved : " + filename, Toast.LENGTH_LONG);
+        toast.show();
     }
 
     @Override
@@ -348,6 +365,10 @@ class myView extends View
                 int cx = (int)x, cy = (int)y;
                 int origColor = currentBitmap.getPixel(cx, cy);
 
+                currentCanvas.drawBitmap(currentBitmap, 0, 0, null);
+                floodFill_array(bufferBitmap, new Point(cx, cy), origColor, currentColor);
+
+                /*
                 Queue<Point> queue = new ArrayDeque<>();
                 queue.add(new Point(cx, cy));
 
@@ -371,6 +392,7 @@ class myView extends View
                             queue.add(new Point(nx, ny));
                     }
                 }
+                */
             }
             else if(act == MotionEvent.ACTION_MOVE)
             {
@@ -386,6 +408,58 @@ class myView extends View
         invalidate();
 
         return true;
+    }
+
+    private void floodFill_array(Bitmap bmp, Point pt, int targetColor, int replacementColor)
+    {
+        if(targetColor == replacementColor)
+            return;
+
+        int width, height;
+        int[] arrPixels;
+
+        width = bmp.getWidth();
+        height = bmp.getHeight();
+
+        arrPixels = new int[width*height];
+        bmp.getPixels(arrPixels, 0, width, 0, 0, width, height);
+
+        Queue<Point> q = new LinkedList<>();
+        q.add(pt);
+
+        while (q.size() > 0) {
+            Point n = q.poll();
+            if (arrPixels[width*n.y + n.x] != targetColor)
+                continue;
+
+            Point w = n, e = new Point(n.x + 1, n.y);
+            while ((w.x > 0) && (arrPixels[width*w.y + w.x] == targetColor)) {
+
+                arrPixels[width*w.y + w.x] = replacementColor;  // setPixel
+
+                if ((w.y > 0) && (arrPixels[width*(w.y-1) + w.x] == targetColor))
+                    q.add(new Point(w.x, w.y - 1));
+                if ((w.y < height - 1)
+                        && (arrPixels[width*(w.y+1) + w.x] == targetColor))
+                    q.add(new Point(w.x, w.y + 1));
+                w.x--;
+            }
+
+            while ((e.x < width - 1)
+                    && (arrPixels[width*e.y + e.x] == targetColor)) {
+
+                arrPixels[width*e.y + e.x] = replacementColor;  // setPixel
+
+                if ((e.y > 0) && (arrPixels[width*(e.y-1) + e.x] == targetColor))
+                    q.add(new Point(e.x, e.y - 1));
+                if ((e.y < height - 1)
+                        && (arrPixels[width*(e.y+1) + e.x] == targetColor))
+                    q.add(new Point(e.x, e.y + 1));
+                e.x++;
+            }
+        }
+
+        bmp.setPixels(arrPixels, 0, width, 0, 0, width, height);
     }
 
 }
